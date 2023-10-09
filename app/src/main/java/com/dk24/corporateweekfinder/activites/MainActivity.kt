@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.dk24.corporateweekfinder.composables.MainViewCompose
 import com.dk24.corporateweekfinder.composables.WeekDetailsBottomSheetCompose
 import com.dk24.corporateweekfinder.ui.theme.CorporateWeekFinderTheme
+import com.dk24.corporateweekfinder.utilites.SharedPreferHelper
 import com.dk24.corporateweekfinder.utilites.ShowToast
 
 
@@ -24,9 +25,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SharedPreferHelper.getInstance(this.applicationContext)
         setContent {
             var showSheet by remember { mutableStateOf(false) }
-
             CorporateWeekFinderTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
