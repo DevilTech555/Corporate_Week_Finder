@@ -1,43 +1,41 @@
 package com.dk24.corporateweekfinder.composables
 
-import android.app.DatePickerDialog
-import android.widget.DatePicker
+import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dk24.corporateweekfinder.models.getWeekDataConfigure
 import com.dk24.corporateweekfinder.ui.theme.CorporateWeekFinderTheme
-import java.util.Calendar
+import com.dk24.corporateweekfinder.utilites.DateTimeFormatterHelper
+import com.dk24.corporateweekfinder.utilites.SharedPreferHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeekDetailsBottomSheetCompose(onDismiss: () -> Unit) {
     val modalBottomSheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
+    ModalBottomSheet(onDismissRequest = onDismiss,
         sheetState = modalBottomSheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
-    ) {
+        dragHandle = { BottomSheetDefaults.DragHandle() }) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -48,34 +46,56 @@ fun WeekDetailsBottomSheetCompose(onDismiss: () -> Unit) {
     }
 }
 
+
 @Composable
 fun WeekDetailsViewCompose() {
-    val context = LocalContext.current
-    val calendar = Calendar.getInstance()
-    var selectedGroomingStartDateText by remember { mutableStateOf("") }
-    val year = calendar[Calendar.YEAR]
-    val month = calendar[Calendar.MONTH]
-    val dayOfMonth = calendar[Calendar.DAY_OF_MONTH]
-
-    val datePicker = DatePickerDialog(
-        context,
-        { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDayOfMonth: Int ->
-            selectedGroomingStartDateText = "$selectedDayOfMonth/${selectedMonth + 1}/$selectedYear"
-        }, year, month, dayOfMonth
-    )
-
-    Text(text = "Select dates for grooming week :")
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = selectedGroomingStartDateText)
-        Spacer(modifier = Modifier.weight(1f))
-        Button(
-            onClick = {
-                datePicker.show()
-            }
+    for (weekData in getWeekDataConfigure()) {
+        Text(
+            text = weekData.label,
+            modifier = Modifier.padding(top = 16.dp)
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 16.dp)
         ) {
-            Text(text = "Select Start date")
+            CustomOutlinedTextField(
+                label = weekData.fromLabel,
+                key = weekData.fromSharedPrefersKey
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            CustomOutlinedTextField(
+                label = weekData.toLabel,
+                key = weekData.toSharedPrefersKey
+            )
+        }
+    }
+}
+
+
+@Composable
+fun CustomOutlinedTextField(label: String, key: SharedPreferHelper.Companion.Key) {
+    val text = remember { mutableStateOf(SharedPreferHelper.getString(key) ?: "") }
+    val showDatePickerDialog = remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = text.value,
+        onValueChange = {},
+        label = {
+            Text(text = label)
+        },
+        enabled = false,
+        modifier = Modifier
+            .defaultMinSize(minWidth = 50.dp, minHeight = 48.dp)
+            .clickable {
+                showDatePickerDialog.value = true
+                Log.i("DK", "OnClick -> ${key.name}")
+            }
+    )
+    if (showDatePickerDialog.value) {
+        DateTimeFormatterHelper.DatePickerDialog { selectedDate ->
+            showDatePickerDialog.value = false
+            text.value = selectedDate
+            SharedPreferHelper.put(key, selectedDate)
         }
     }
 }
@@ -88,7 +108,9 @@ fun WeekDetailsBottomSheetComposePreview() {
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
                 WeekDetailsViewCompose()
             }
